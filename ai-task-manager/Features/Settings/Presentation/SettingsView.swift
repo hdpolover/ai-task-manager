@@ -161,14 +161,14 @@ struct SettingsView: View {
     }
     
     private var notSignedInSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 12) {
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Not Signed In")
+                    Text("Guest Mode")
                         .font(.headline)
                         .fontWeight(.semibold)
                     
-                    Text("Sign in to sync your data across devices")
+                    Text("Sign in to unlock all features")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                 }
@@ -177,12 +177,26 @@ struct SettingsView: View {
                 
                 Image(systemName: "person.circle")
                     .font(.title2)
-                    .foregroundColor(.gray)
+                    .foregroundColor(.orange)
             }
             
             Text("Using local storage only")
                 .font(.caption)
                 .foregroundColor(.orange)
+            
+            VStack(spacing: 8) {
+                FeatureItem(icon: "cloud.fill", title: "Cloud Sync", description: "Sync tasks across devices")
+                FeatureItem(icon: "brain.head.profile", title: "AI Assistant", description: "Natural language task creation")
+                FeatureItem(icon: "chart.bar.fill", title: "Analytics", description: "Detailed insights and trends")
+                FeatureItem(icon: "person.2.fill", title: "Collaboration", description: "Share tasks with others")
+            }
+            .padding(.top, 8)
+            
+            Button("Sign In to Unlock Features") {
+                NotificationCenter.default.post(name: NSNotification.Name("ShowAuthentication"), object: nil)
+            }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.small)
         }
         .padding(.vertical, 4)
     }
@@ -487,6 +501,37 @@ struct DebugView: View {
             let dataManager = diContainer.getDataManager()
             await dataManager.saveTasks([])
             await loadDebugData()
+        }
+    }
+}
+
+// MARK: - Feature Item Component
+struct FeatureItem: View {
+    let icon: String
+    let title: String
+    let description: String
+    
+    var body: some View {
+        HStack(spacing: 8) {
+            Image(systemName: icon)
+                .foregroundColor(.blue)
+                .frame(width: 20)
+            
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.caption)
+                    .fontWeight(.medium)
+                
+                Text(description)
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+            }
+            
+            Spacer()
+            
+            Image(systemName: "lock.fill")
+                .font(.caption2)
+                .foregroundColor(.orange)
         }
     }
 }

@@ -39,6 +39,14 @@ struct TaskListView: View {
         } message: {
             Text(taskViewModel.errorMessage ?? "Unknown error occurred")
         }
+        .alert(taskViewModel.authPromptTitle, isPresented: $taskViewModel.showingAuthPrompt) {
+            Button("Sign In") {
+                NotificationCenter.default.post(name: NSNotification.Name("ShowAuthentication"), object: nil)
+            }
+            Button("Continue as Guest", role: .cancel) { }
+        } message: {
+            Text(taskViewModel.authPromptMessage)
+        }
     }
     
     @ViewBuilder
@@ -101,7 +109,11 @@ struct TaskListView: View {
             HStack {
                 Spacer()
                 AIFloatingActionButton {
-                    showingAIAssistant = true
+                    if taskViewModel.isGuestMode {
+                        taskViewModel.promptForAIAssistant()
+                    } else {
+                        showingAIAssistant = true
+                    }
                 }
                 .padding(.trailing, 20)
                 .padding(.bottom, 20)
@@ -113,27 +125,40 @@ struct TaskListView: View {
     private var toolbarItems: some ToolbarContent {
         ToolbarItem(placement: .navigationBarLeading) {
             Button {
-                showingAIAssistant = true
+                if taskViewModel.isGuestMode {
+                    taskViewModel.promptForAIAssistant()
+                } else {
+                    showingAIAssistant = true
+                }
             } label: {
                 HStack(spacing: 4) {
-                    Image(systemName: "brain.head.profile")
+                    Image(systemName: taskViewModel.isGuestMode ? "lock.fill" : "brain.head.profile")
                     Text("AI Assistant")
+                    if taskViewModel.isGuestMode {
+                        Image(systemName: "star.fill")
+                            .font(.caption)
+                            .foregroundColor(.yellow)
+                    }
                 }
             }
-            .foregroundColor(themeManager.isDarkMode ? .white : .purple)
+            .foregroundColor(taskViewModel.isGuestMode ? .orange : (themeManager.isDarkMode ? .white : .purple))
         }
         
         ToolbarItem(placement: .navigationBarTrailing) {
             HStack(spacing: 16) {
-                Button("Refresh") {
+                Button(taskViewModel.isGuestMode ? "Sync" : "Refresh") {
                     taskViewModel.syncWithRemote()
                 }
-                .foregroundColor(themeManager.isDarkMode ? .white : .blue)
+                .foregroundColor(taskViewModel.isGuestMode ? .orange : (themeManager.isDarkMode ? .white : .blue))
                 
                 Button("Add Task") {
-                    showingAddTask = true
+                    if taskViewModel.canAddMoreTasks {
+                        showingAddTask = true
+                    } else {
+                        taskViewModel.promptForAIAssistant()
+                    }
                 }
-                .foregroundColor(themeManager.isDarkMode ? .white : .green)
+                .foregroundColor(taskViewModel.canAddMoreTasks ? (themeManager.isDarkMode ? .white : .green) : .orange)
             }
         }
     }
@@ -145,13 +170,26 @@ struct TaskStatsView: View {
     
     var body: some View {
         VStack(spacing: 12) {
-            // Quick AI Tip
+            // Guest Mode or AI Tip
             HStack {
-                Image(systemName: "lightbulb.fill")
-                    .foregroundColor(.yellow)
-                Text("Try: \"Add call dentist tomorrow\" or \"Show my urgent tasks\"")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                Image(systemName: viewModel.isGuestMode ? "person.circle" : "lightbulb.fill")
+                    .foregroundColor(viewModel.isGuestMode ? .orange : .yellow)
+                
+                if viewModel.isGuestMode {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Guest Mode - \(viewModel.guestTasksRemaining) tasks remaining")
+                            .font(.caption)
+                            .fontWeight(.medium)
+                            .foregroundColor(.orange)
+                        Text("Sign in for unlimited tasks and AI features")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                    }
+                } else {
+                    Text("Try: \"Add call dentist tomorrow\" or \"Show my urgent tasks\"")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
                 Spacer()
             }
             .padding(.horizontal)
@@ -162,27 +200,27 @@ struct TaskStatsView: View {
                 TaskStatCard(title: "Pending", count: viewModel.pendingTasks.count, color: .orange)
                 TaskStatCard(title: "Done", count: viewModel.completedTasks.count, color: .green)
                 
-                // AI-Enhanced stat
+                // AI-Enhanced stat or Guest limit
                 VStack {
                     HStack {
-                        Image(systemName: "brain")
+                        Image(systemName: viewModel.isGuestMode ? "person.circle" : "brain")
                             .font(.caption)
-                            .foregroundColor(.purple)
-                        Text("\(aiCreatedTasksCount(viewModel.tasks))")
+                            .foregroundColor(viewModel.isGuestMode ? .orange : .purple)
+                        Text("\(viewModel.isGuestMode ? viewModel.guestTasksRemaining : aiCreatedTasksCount(viewModel.tasks))")
                             .font(.title2)
                             .fontWeight(.bold)
-                            .foregroundColor(.purple)
+                            .foregroundColor(viewModel.isGuestMode ? .orange : .purple)
                     }
-                    Text("AI Created")
+                    Text(viewModel.isGuestMode ? "Remaining" : "AI Created")
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
                 .frame(maxWidth: .infinity)
                 .padding(8)
-                .background(Color.purple.opacity(0.1))
+                .background((viewModel.isGuestMode ? Color.orange : Color.purple).opacity(0.1))
                 .overlay(
                     RoundedRectangle(cornerRadius: 8)
-                        .stroke(Color.purple.opacity(0.3), lineWidth: 1)
+                        .stroke((viewModel.isGuestMode ? Color.orange : Color.purple).opacity(0.3), lineWidth: 1)
                 )
                 .cornerRadius(8)
             }

@@ -9,6 +9,7 @@ import SwiftUI
 
 struct AppCoordinator: View {
     @State private var showOnboarding = false
+    @State private var showAuthenticationModal = false
     @StateObject private var authManager = AuthenticationManager()
     @Environment(\.diContainer) private var diContainer
     
@@ -19,19 +20,22 @@ struct AppCoordinator: View {
                     showOnboarding = false
                 }
                 .transition(.opacity.combined(with: .scale))
-            } else if authManager.isAuthenticated {
+            } else {
                 ContentView()
                     .transition(.opacity.combined(with: .scale))
-            } else {
-                AuthenticationView()
-                    .transition(.opacity.combined(with: .scale))
+                    .sheet(isPresented: $showAuthenticationModal) {
+                        AuthenticationView()
+                            .environmentObject(authManager)
+                    }
             }
         }
         .animation(.easeInOut(duration: 0.5), value: showOnboarding)
-        .animation(.easeInOut(duration: 0.5), value: authManager.isAuthenticated)
         .environmentObject(authManager)
         .onAppear {
             checkOnboardingStatus()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ShowAuthentication"))) { _ in
+            showAuthenticationModal = true
         }
     }
     

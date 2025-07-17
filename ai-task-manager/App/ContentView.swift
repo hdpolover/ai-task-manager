@@ -12,6 +12,7 @@ import SwiftUI
 
 struct ContentView: View {
     @EnvironmentObject private var themeManager: ThemeManager
+    @EnvironmentObject private var authManager: AuthenticationManager
     @Environment(\.diContainer) private var diContainer
     
     var body: some View {
@@ -21,12 +22,14 @@ struct ContentView: View {
                     Image(systemName: "list.bullet")
                     Text("Tasks")
                 }
+                .badge(authManager.isAuthenticated ? nil : "Guest")
             
             AnalyticsCoordinatorView()
                 .tabItem {
                     Image(systemName: "chart.bar.fill")
                     Text("Analytics")
                 }
+                .badge(authManager.isAuthenticated ? nil : "Guest")
             
             SettingsView()
                 .tabItem {
@@ -35,6 +38,11 @@ struct ContentView: View {
                 }
         }
         .preferredColorScheme(themeManager.isDarkMode ? .dark : .light)
+        .safeAreaInset(edge: .top) {
+            if !authManager.isAuthenticated {
+                GuestModeHeader()
+            }
+        }
     }
 }
 
@@ -78,6 +86,49 @@ struct UsersCoordinatorView: View {
     var body: some View {
         UserProfileView()
             .environmentObject(viewModel)
+    }
+}
+
+// MARK: - Guest Mode Header
+struct GuestModeHeader: View {
+    @EnvironmentObject private var themeManager: ThemeManager
+    
+    var body: some View {
+        HStack {
+            HStack(spacing: 8) {
+                Image(systemName: "person.circle")
+                    .foregroundColor(.orange)
+                Text("Guest Mode")
+                    .font(.caption)
+                    .fontWeight(.medium)
+                    .foregroundColor(.orange)
+            }
+            
+            Spacer()
+            
+            Button("Sign In") {
+                NotificationCenter.default.post(name: NSNotification.Name("ShowAuthentication"), object: nil)
+            }
+            .font(.caption)
+            .fontWeight(.semibold)
+            .foregroundColor(.white)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            .background(Color.blue)
+            .cornerRadius(12)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
+        .background(
+            Color.orange.opacity(0.1)
+                .overlay(
+                    Rectangle()
+                        .fill(Color.orange.opacity(0.3))
+                        .frame(height: 1),
+                    alignment: .bottom
+                )
+        )
+        .background(.regularMaterial, in: Rectangle())
     }
 }
 

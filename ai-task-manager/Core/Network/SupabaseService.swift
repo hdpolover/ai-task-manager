@@ -67,14 +67,28 @@ struct AuthResponse: Codable {
 struct AuthUser: Codable {
     let id: String
     let email: String?
-    let emailConfirmed: Bool
+    private let emailConfirmedAt: String?
     let createdAt: String
     let updatedAt: String
+    
+    // Computed property to check if email is confirmed
+    var emailConfirmed: Bool {
+        return emailConfirmedAt != nil
+    }
+    
+    // Custom initializer for testing/mock data
+    init(id: String, email: String?, emailConfirmedAt: String? = nil, createdAt: String, updatedAt: String) {
+        self.id = id
+        self.email = email
+        self.emailConfirmedAt = emailConfirmedAt
+        self.createdAt = createdAt
+        self.updatedAt = updatedAt
+    }
     
     enum CodingKeys: String, CodingKey {
         case id
         case email
-        case emailConfirmed = "email_confirmed_at"
+        case emailConfirmedAt = "email_confirmed_at"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
     }
@@ -137,6 +151,8 @@ class SupabaseService: SupabaseServiceProtocol {
         }
         self.baseURL = url
         self.apiKey = SupabaseConfig.anonKey
+        print("🔧 SupabaseService initialized with URL: \(url)")
+        print("🔑 API Key: \(apiKey.prefix(20))...")
         loadStoredSession()
     }
     
@@ -144,59 +160,139 @@ class SupabaseService: SupabaseServiceProtocol {
     func signUp(email: String, password: String) async throws -> AuthResponse {
         let url = baseURL.appendingPathComponent("auth/v1/signup")
         
+        print("🔐 Attempting sign up to: \(url)")
+        print("📧 Email: \(email)")
+        print("🌐 Base URL: \(baseURL)")
+        print("🔑 API Key prefix: \(apiKey.prefix(20))...")
+        
+        // First, let's test if the base URL is reachable
+        do {
+            let testUrl = baseURL.appendingPathComponent("rest/v1/")
+            var testRequest = URLRequest(url: testUrl)
+            testRequest.httpMethod = "GET"
+            testRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            testRequest.setValue(apiKey, forHTTPHeaderField: "apikey")
+            testRequest.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+            
+            print("🔍 Testing Supabase connectivity to: \(testUrl)")
+            let (testData, testResponse) = try await session.data(for: testRequest)
+            
+            if let httpTestResponse = testResponse as? HTTPURLResponse {
+                print("✅ Connectivity test: HTTP \(httpTestResponse.statusCode)")
+                if let testString = String(data: testData, encoding: .utf8) {
+                    print("📋 Test response: \(String(testString.prefix(100)))")
+                }
+            }
+        } catch {
+            print("⚠️ Connectivity test failed: \(error)")
+        }
+        
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue(apiKey, forHTTPHeaderField: "apikey")
+        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
         
         let signUpRequest = SignUpRequest(email: email, password: password)
         let encoder = JSONEncoder()
         request.httpBody = try encoder.encode(signUpRequest)
         
-        print("🔐 Attempting sign up to: \(url)")
-        print("📧 Email: \(email)")
-        
-        let (data, response) = try await session.data(for: request)
-        
-        guard let httpResponse = response as? HTTPURLResponse else {
-            print("❌ Failed to get HTTP response")
-            throw SupabaseError.requestFailed
+        if let requestBody = String(data: request.httpBody!, encoding: .utf8) {
+            print("� Request body: \(requestBody)")
         }
-        
-        print("📊 HTTP Status Code: \(httpResponse.statusCode)")
-        
-        if let responseString = String(data: data, encoding: .utf8) {
-            print("📦 Response Body: \(responseString)")
-        }
-        
-        let decoder = JSONDecoder()
         
         do {
-            let authResponse = try decoder.decode(AuthResponse.self, from: data)
+            let (data, response) = try await session.data(for: request)
             
-            if httpResponse.statusCode == 200 || httpResponse.statusCode == 201 {
-                if let session = authResponse.session {
-                    self.currentSession = session
-                    storeSession(session)
-                    print("✅ Sign up successful!")
+            guard let httpResponse = response as? HTTPURLResponse else {
+                print("❌ Failed to get HTTP response")
+                throw SupabaseError.requestFailed
+            }
+            
+            print("📊 HTTP Status Code: \(httpResponse.statusCode)")
+            print("📋 Response Headers: \(httpResponse.allHeaderFields)")
+            print("📏 Response Data Length: \(data.count) bytes")
+            
+            if let responseString = String(data: data, encoding: .utf8) {
+                print("📦 Response Body: \(responseString)")
+                print("📝 First 50 characters: \(String(responseString.prefix(50)))")
+                if responseString.contains("<html>") || responseString.contains("<!DOCTYPE") {
+                    print("⚠️ WARNING: Response appears to be HTML, not JSON!")
                 }
-                return authResponse
             } else {
-                if let error = authResponse.error {
-                    print("❌ Sign up failed with error: \(error.message)")
-                    throw SupabaseError.authenticationFailed
+                print("❌ Unable to decode response data as UTF-8 string")
+                print("🔍 Raw bytes: \(data.map { String(format: "%02x", $0) }.joined(separator: " "))")
+            }
+            
+            let decoder = JSONDecoder()
+            
+            do {
+                let authResponse = try decoder.decode(AuthResponse.self, from: data)
+                
+                if httpResponse.statusCode == 200 || httpResponse.statusCode == 201 {
+                    if let session = authResponse.session {
+                        self.currentSession = session
+                        storeSession(session)
+                        print("✅ Sign up successful!")
+                    }
+                    return authResponse
                 } else {
-                    print("❌ Sign up failed with status code: \(httpResponse.statusCode)")
-                    throw SupabaseError.authenticationFailed
+                    if let error = authResponse.error {
+                        print("❌ Sign up failed with error: \(error.message)")
+                        throw SupabaseError.authenticationFailed
+                    } else {
+                        print("❌ Sign up failed with status code: \(httpResponse.statusCode)")
+                        throw SupabaseError.authenticationFailed
+                    }
                 }
+            } catch let decodingError {
+                print("❌ JSON Decoding Error: \(decodingError)")
+                print("🔍 Decoding error details:")
+                if let decodingError = decodingError as? DecodingError {
+                    switch decodingError {
+                    case .dataCorrupted(let context):
+                        print("   Data corrupted: \(context.debugDescription)")
+                        if let underlyingError = context.underlyingError {
+                            print("   Underlying error: \(underlyingError)")
+                        }
+                    case .keyNotFound(let key, let context):
+                        print("   Key not found: \(key) - \(context.debugDescription)")
+                    case .typeMismatch(let type, let context):
+                        print("   Type mismatch: \(type) - \(context.debugDescription)")
+                    case .valueNotFound(let type, let context):
+                        print("   Value not found: \(type) - \(context.debugDescription)")
+                    @unknown default:
+                        print("   Unknown decoding error")
+                    }
+                }
+                
+                // Try to parse as error response
+                if let errorString = String(data: data, encoding: .utf8) {
+                    print("📄 Raw error response: \(errorString)")
+                    
+                    // Try to decode as a simple error object
+                    if let errorData = errorString.data(using: .utf8) {
+                        do {
+                            if let errorJson = try JSONSerialization.jsonObject(with: errorData) as? [String: Any] {
+                                if let message = errorJson["message"] as? String {
+                                    let authError = AuthError(message: message, code: errorJson["code"] as? String)
+                                    return AuthResponse(user: nil, session: nil, error: authError)
+                                }
+                            }
+                        } catch {
+                            print("❌ Failed to parse error JSON: \(error)")
+                        }
+                    }
+                }
+                throw SupabaseError.invalidResponse
             }
-        } catch let decodingError {
-            print("❌ JSON Decoding Error: \(decodingError)")
-            // Try to parse as error response
-            if let errorString = String(data: data, encoding: .utf8) {
-                print("Raw error response: \(errorString)")
+        } catch let networkError {
+            print("❌ Network Error: \(networkError)")
+            if let urlError = networkError as? URLError {
+                print("   URL Error Code: \(urlError.code.rawValue)")
+                print("   URL Error Description: \(urlError.localizedDescription)")
             }
-            throw SupabaseError.invalidResponse
+            throw networkError
         }
     }
     
@@ -349,6 +445,10 @@ class SupabaseService: SupabaseServiceProtocol {
     func createUserProfile(_ profile: UserProfile) async throws -> UserProfile {
         let url = baseURL.appendingPathComponent("rest/v1/user_profiles")
         
+        print("👤 Creating user profile at: \(url)")
+        print("   Profile: \(profile.name) - \(profile.email)")
+        print("   Auth User ID: \(profile.authUserId ?? "nil")")
+        
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         
@@ -359,12 +459,30 @@ class SupabaseService: SupabaseServiceProtocol {
         
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .iso8601
-        request.httpBody = try encoder.encode(profile)
+        
+        do {
+            request.httpBody = try encoder.encode(profile)
+            print("   ✅ Profile JSON encoded successfully")
+        } catch {
+            print("   ❌ Failed to encode profile: \(error)")
+            throw error
+        }
         
         let (data, response) = try await session.data(for: request)
         
-        guard let httpResponse = response as? HTTPURLResponse,
-              httpResponse.statusCode == 201 else {
+        guard let httpResponse = response as? HTTPURLResponse else {
+            print("   ❌ Failed to get HTTP response")
+            throw SupabaseError.requestFailed
+        }
+        
+        print("   📊 Profile creation status: \(httpResponse.statusCode)")
+        
+        if let responseString = String(data: data, encoding: .utf8) {
+            print("   📦 Profile response: \(responseString)")
+        }
+        
+        guard httpResponse.statusCode == 201 else {
+            print("   ❌ Profile creation failed with status: \(httpResponse.statusCode)")
             throw SupabaseError.requestFailed
         }
         
@@ -373,9 +491,11 @@ class SupabaseService: SupabaseServiceProtocol {
         let createdProfile = try decoder.decode([UserProfile].self, from: data)
         
         guard let profile = createdProfile.first else {
+            print("   ❌ No profile returned in response")
             throw SupabaseError.invalidResponse
         }
         
+        print("   ✅ Profile created successfully with ID: \(profile.id)")
         return profile
     }
     
@@ -562,7 +682,7 @@ class MockSupabaseService: SupabaseServiceProtocol {
         let user = AuthUser(
             id: UUID().uuidString,
             email: email,
-            emailConfirmed: true,
+            emailConfirmedAt: ISO8601DateFormatter().string(from: Date()), // Email confirmed immediately in mock
             createdAt: ISO8601DateFormatter().string(from: Date()),
             updatedAt: ISO8601DateFormatter().string(from: Date())
         )
@@ -593,7 +713,7 @@ class MockSupabaseService: SupabaseServiceProtocol {
         let user = AuthUser(
             id: UUID().uuidString,
             email: email,
-            emailConfirmed: true,
+            emailConfirmedAt: ISO8601DateFormatter().string(from: Date()), // Email confirmed immediately in mock
             createdAt: ISO8601DateFormatter().string(from: Date()),
             updatedAt: ISO8601DateFormatter().string(from: Date())
         )

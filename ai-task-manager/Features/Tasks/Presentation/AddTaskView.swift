@@ -28,6 +28,33 @@ struct AddTaskView: View {
     var body: some View {
         NavigationView {
             Form {
+                // Guest Mode Warning
+                if taskViewModel.isGuestMode && !taskViewModel.canAddMoreTasks {
+                    Section {
+                        VStack(alignment: .leading, spacing: 8) {
+                            HStack {
+                                Image(systemName: "exclamationmark.triangle.fill")
+                                    .foregroundColor(.orange)
+                                Text("Task Limit Reached")
+                                    .fontWeight(.semibold)
+                                    .foregroundColor(.orange)
+                            }
+                            
+                            Text("Free users can create up to 5 tasks. Sign in to create unlimited tasks and unlock AI features.")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            
+                            Button("Sign In to Continue") {
+                                dismiss()
+                                NotificationCenter.default.post(name: NSNotification.Name("ShowAuthentication"), object: nil)
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .controlSize(.small)
+                        }
+                        .padding(.vertical, 8)
+                    }
+                }
+                
                 Section("Task Details") {
                     TextField("Task Title", text: $title)
                         .textFieldStyle(RoundedBorderTextFieldStyle())
@@ -50,7 +77,30 @@ struct AddTaskView: View {
                 }
                 
                 // NL Analysis Results Section
-                if let nlResult = nlAnalysisResult, showNLSuggestions {
+                if taskViewModel.isGuestMode {
+                    Section("AI Suggestions 🔒 Premium") {
+                        VStack(alignment: .leading, spacing: 12) {
+                            HStack {
+                                Image(systemName: "brain.head.profile")
+                                    .foregroundColor(.purple)
+                                VStack(alignment: .leading) {
+                                    Text("Smart Task Analysis")
+                                        .fontWeight(.semibold)
+                                    Text("AI automatically detects priority, category, due dates, and more from your task description.")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                }
+                            }
+                            
+                            Button("Sign In to Unlock AI Features") {
+                                NotificationCenter.default.post(name: NSNotification.Name("ShowAuthentication"), object: nil)
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .controlSize(.small)
+                        }
+                        .padding(.vertical, 8)
+                    }
+                } else if let nlResult = nlAnalysisResult, showNLSuggestions {
                     Section("AI Suggestions") {
                         VStack(alignment: .leading, spacing: 8) {
                             if let suggestedDate = nlResult.extractedDueDate {
@@ -193,7 +243,7 @@ struct AddTaskView: View {
                     Button("Save") {
                         saveTask()
                     }
-                    .disabled(!isFormValid)
+                    .disabled(!isFormValid || !taskViewModel.canAddMoreTasks)
                 }
             }
         }
@@ -222,6 +272,11 @@ struct AddTaskView: View {
             nlAnalysisResult = nil
             showNLSuggestions = false
             return 
+        }
+        
+        // Skip analysis for guest users
+        guard !taskViewModel.isGuestMode else {
+            return
         }
         
         isAnalyzing = true

@@ -17,32 +17,77 @@ struct AnalyticsView: View {
         NavigationView {
             ScrollView {
                 VStack(spacing: 20) {
-                    // Time Range Picker
-                    timeRangePicker
-                    
-                    // Task Statistics Cards
-                    statisticsCards
-                    
-                    // Task Completion Chart
-                    completionChart
-                    
-                    // Category Distribution
-                    categoryChart
-                    
-                    // Priority Distribution
-                    priorityChart
-                    
-                    // Recent Activity
-                    recentActivity
+                    if taskViewModel.isGuestMode {
+                        guestModePrompt
+                    } else {
+                        // Time Range Picker
+                        timeRangePicker
+                        
+                        // Task Statistics Cards
+                        statisticsCards
+                        
+                        // Task Completion Chart
+                        completionChart
+                        
+                        // Category Distribution
+                        categoryChart
+                        
+                        // Priority Distribution
+                        priorityChart
+                        
+                        // Recent Activity
+                        recentActivity
+                    }
                 }
                 .padding()
             }
             .navigationTitle("Analytics")
             .navigationBarTitleDisplayMode(.large)
             .onAppear {
-                taskViewModel.loadTasks()
+                if taskViewModel.isGuestMode {
+                    taskViewModel.promptForAnalytics()
+                } else {
+                    taskViewModel.loadTasks()
+                }
             }
         }
+    }
+    
+    // MARK: - Guest Mode Prompt
+    private var guestModePrompt: some View {
+        VStack(spacing: 24) {
+            Image(systemName: "chart.bar.fill")
+                .font(.system(size: 60))
+                .foregroundColor(.blue)
+            
+            Text("Analytics & Insights")
+                .font(.title)
+                .fontWeight(.bold)
+            
+            Text("Unlock detailed analytics to track your productivity")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+            
+            VStack(alignment: .leading, spacing: 16) {
+                FeatureRow(icon: "chart.line.uptrend.xyaxis", title: "Productivity Trends", description: "Track your task completion over time")
+                FeatureRow(icon: "chart.pie.fill", title: "Category Insights", description: "See how you spend your time across different areas")
+                FeatureRow(icon: "target", title: "Goal Tracking", description: "Monitor your progress towards daily and weekly goals")
+                FeatureRow(icon: "brain.head.profile", title: "AI Insights", description: "Get personalized recommendations based on your patterns")
+            }
+            .padding()
+            .background(Color(.systemGray6))
+            .cornerRadius(12)
+            
+            Button("Sign In to View Analytics") {
+                NotificationCenter.default.post(name: NSNotification.Name("ShowAuthentication"), object: nil)
+            }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.large)
+            
+            Spacer()
+        }
+        .padding()
     }
     
     // MARK: - Time Range Picker
@@ -411,6 +456,34 @@ enum TimeRange: CaseIterable {
         case .month: return "Month"
         case .quarter: return "Quarter"
         case .year: return "Year"
+        }
+    }
+}
+
+// MARK: - Feature Row Component
+struct FeatureRow: View {
+    let icon: String
+    let title: String
+    let description: String
+    
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: icon)
+                .font(.title2)
+                .foregroundColor(.blue)
+                .frame(width: 30)
+            
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                
+                Text(description)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            
+            Spacer()
         }
     }
 }

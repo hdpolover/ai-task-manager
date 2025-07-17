@@ -339,6 +339,8 @@ struct SignUpView: View {
     }
     
     private func signUp() {
+        print("📱 SignUpView: Sign up button pressed")
+        print("📱 Form data - Email: \(email), Name: \(name), Password length: \(password.count)")
         focusedField = nil
         _Concurrency.Task {
             await authManager.signUp(email: email, password: password, name: name)
