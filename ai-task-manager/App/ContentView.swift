@@ -22,10 +22,10 @@ struct ContentView: View {
                     Text("Tasks")
                 }
             
-            UsersCoordinatorView()
+            AnalyticsCoordinatorView()
                 .tabItem {
-                    Image(systemName: "person.3")
-                    Text("Users")
+                    Image(systemName: "chart.bar.fill")
+                    Text("Analytics")
                 }
             
             SettingsView()
@@ -50,6 +50,20 @@ struct TasksCoordinatorView: View {
     var body: some View {
         TaskListView()
             .environmentObject(viewModel)
+    }
+}
+
+struct AnalyticsCoordinatorView: View {
+    @Environment(\.diContainer) private var diContainer
+    @StateObject private var taskViewModel: TaskViewModel
+    
+    init() {
+        self._taskViewModel = StateObject(wrappedValue: DIContainer.shared.makeTaskViewModel())
+    }
+    
+    var body: some View {
+        AnalyticsView()
+            .environmentObject(taskViewModel)
     }
 }
 

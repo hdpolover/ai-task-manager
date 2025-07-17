@@ -53,66 +53,93 @@ class LocalTaskRepository: TaskRepositoryProtocol {
     }
 }
 
-// MARK: - Remote Task Repository (for future API integration)
-class RemoteTaskRepository: TaskRepositoryProtocol {
-    private let networkService: NetworkServiceProtocol
-    private let localRepository: TaskRepositoryProtocol
+// MARK: - Supabase Task Repository Implementation
+class SupabaseTaskRepository: TaskRepositoryProtocol {
+    private let dataManager: DataManagerProtocol
+    private let supabaseService: SupabaseServiceProtocol
     
-    init(networkService: NetworkServiceProtocol, localRepository: TaskRepositoryProtocol) {
-        self.networkService = networkService
-        self.localRepository = localRepository
+    init(dataManager: DataManagerProtocol, supabaseService: SupabaseServiceProtocol) {
+        self.dataManager = dataManager
+        self.supabaseService = supabaseService
     }
     
     func fetchTasks() async -> [TaskItem] {
-        // Try remote first, fallback to local
         do {
-            let tasks = try await networkService.fetchTasks()
-            // Cache locally
-            _ = await localRepository.saveTasks(tasks)
-            return tasks
+            let remoteTasks = try await supabaseService.getTasks()
+            // Cache locally for offline access
+            _ = await dataManager.saveTasks(remoteTasks)
+            return remoteTasks
         } catch {
-            // Fallback to local cache
-            return await localRepository.fetchTasks()
+            print("Failed to fetch from Supabase, using local cache: \(error)")
+            return await dataManager.loadTasks()
         }
     }
     
     func saveTask(_ task: TaskItem) async -> Bool {
-        // Save locally first for offline support
-        let localSuccess = await localRepository.saveTask(task)
-        
-        // Then sync to remote
         do {
-            _ = try await networkService.createTask(task)
-            return true
+            _ = try await supabaseService.createTask(task)
+            
+            // Update local cache
+            var currentTasks = await dataManager.loadTasks()
+            currentTasks.append(task)
+            return await dataManager.saveTasks(currentTasks)
         } catch {
-            return localSuccess
+            print("Failed to save task to Supabase: \(error)")
+            // Save locally for later sync
+            var currentTasks = await dataManager.loadTasks()
+            currentTasks.append(task)
+            return await dataManager.saveTasks(currentTasks)
         }
     }
     
     func updateTask(_ task: TaskItem) async -> Bool {
-        let localSuccess = await localRepository.updateTask(task)
-        
         do {
-            _ = try await networkService.updateTask(task)
+            _ = try await supabaseService.updateTask(task)
+            
+            // Update local cache
+            var currentTasks = await dataManager.loadTasks()
+            if let index = currentTasks.firstIndex(where: { $0.id == task.id }) {
+                currentTasks[index] = task
+                return await dataManager.saveTasks(currentTasks)
+            }
             return true
         } catch {
-            return localSuccess
+            print("Failed to update task in Supabase: \(error)")
+            // Update locally for later sync
+            var currentTasks = await dataManager.loadTasks()
+            if let index = currentTasks.firstIndex(where: { $0.id == task.id }) {
+                currentTasks[index] = task
+                return await dataManager.saveTasks(currentTasks)
+            }
+            return false
         }
     }
     
     func deleteTask(id: UUID) async -> Bool {
-        let localSuccess = await localRepository.deleteTask(id: id)
-        
         do {
-            _ = try await networkService.deleteTask(id: id)
-            return true
+            try await supabaseService.deleteTask(id: id)
+            
+            // Update local cache
+            var currentTasks = await dataManager.loadTasks()
+            currentTasks.removeAll { $0.id == id }
+            return await dataManager.saveTasks(currentTasks)
         } catch {
-            return localSuccess
+            print("Failed to delete task from Supabase: \(error)")
+            // Delete locally for later sync
+            var currentTasks = await dataManager.loadTasks()
+            currentTasks.removeAll { $0.id == id }
+            return await dataManager.saveTasks(currentTasks)
         }
     }
     
     func toggleTaskCompletion(id: UUID) async -> Bool {
-        return await localRepository.toggleTaskCompletion(id: id)
+        var currentTasks = await dataManager.loadTasks()
+        
+        if let index = currentTasks.firstIndex(where: { $0.id == id }) {
+            currentTasks[index].isCompleted.toggle()
+            return await updateTask(currentTasks[index])
+        }
+        return false
     }
 }
 

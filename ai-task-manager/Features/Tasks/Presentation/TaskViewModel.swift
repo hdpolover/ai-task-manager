@@ -19,21 +19,26 @@ class TaskViewModel: ObservableObject {
     
     // MARK: - Dependencies
     private let dataManager: DataManagerProtocol
-    private let networkService: NetworkService
+    private let supabaseService: SupabaseServiceProtocol
+    private let taskRepository: TaskRepositoryProtocol
     private let nlService: NaturalLanguageService
     
     // MARK: - Initialization
-    init(dataManager: DataManagerProtocol = DataManager(), 
-         networkService: NetworkService = NetworkService.shared,
+    init(dataManager: DataManagerProtocol = DIContainer.shared.getDataManager(), 
+         supabaseService: SupabaseServiceProtocol = DIContainer.shared.getSupabaseService(),
          nlService: NaturalLanguageService = NaturalLanguageService()) {
         self.dataManager = dataManager
-        self.networkService = networkService
+        self.supabaseService = supabaseService
+        self.taskRepository = SupabaseTaskRepository(dataManager: dataManager, supabaseService: supabaseService)
         self.nlService = nlService
         loadTasks()
     }
     
     // MARK: - Task Management Functions
     func addTask(title: String, description: String, priority: TaskPriority? = nil, category: TaskCategory? = nil, dueDate: Date? = nil, estimatedDuration: TimeInterval? = nil, keywords: [String]? = nil) {
+        isLoading = true
+        errorMessage = nil
+        
         // Use NL processing if values aren't explicitly provided
         let combinedText = "\(title) \(description)"
         let nlResult = nlService.analyzeTaskText(combinedText)
@@ -54,8 +59,21 @@ class TaskViewModel: ObservableObject {
             keywords: finalKeywords
         )
         
+        // Add to local state immediately for responsive UI
         tasks.append(newTask)
-        saveTasks()
+        
+        // Save to Supabase in background
+        _Concurrency.Task {
+            let success = await taskRepository.saveTask(newTask)
+            
+            await MainActor.run {
+                self.isLoading = false
+                if !success {
+                    self.errorMessage = "Failed to save task to cloud. It's saved locally."
+                    self.showingError = true
+                }
+            }
+        }
     }
     
     // Enhanced version with NL analysis
@@ -73,21 +91,59 @@ class TaskViewModel: ObservableObject {
             keywords: nlResult.extractedKeywords
         )
         
+        // Add to local state immediately
         tasks.append(newTask)
-        saveTasks()
+        
+        // Save to Supabase in background
+        _Concurrency.Task {
+            let success = await taskRepository.saveTask(newTask)
+            
+            await MainActor.run {
+                if !success {
+                    self.errorMessage = "Failed to save task to cloud. It's saved locally."
+                    self.showingError = true
+                }
+            }
+        }
         
         return nlResult
     }
     
     func deleteTask(at offsets: IndexSet) {
+        let tasksToDelete = offsets.map { tasks[$0] }
+        
+        // Remove from local state immediately
         tasks.remove(atOffsets: offsets)
-        saveTasks()
+        
+        // Delete from Supabase in background
+        _Concurrency.Task {
+            for task in tasksToDelete {
+                let success = await taskRepository.deleteTask(id: task.id)
+                if !success {
+                    await MainActor.run {
+                        self.errorMessage = "Failed to delete task from cloud."
+                        self.showingError = true
+                    }
+                }
+            }
+        }
     }
     
     func toggleTaskCompletion(_ task: TaskItem) {
         if let index = tasks.firstIndex(where: { $0.id == task.id }) {
             tasks[index].isCompleted.toggle()
-            saveTasks()
+            let updatedTask = tasks[index]
+            
+            // Update in Supabase
+            _Concurrency.Task {
+                let success = await taskRepository.updateTask(updatedTask)
+                if !success {
+                    await MainActor.run {
+                        self.errorMessage = "Failed to update task in cloud."
+                        self.showingError = true
+                    }
+                }
+            }
         }
     }
     
@@ -100,48 +156,54 @@ class TaskViewModel: ObservableObject {
             tasks[index].dueDate = dueDate
             tasks[index].estimatedDuration = estimatedDuration
             tasks[index].keywords = keywords
-            saveTasks()
+            
+            let updatedTask = tasks[index]
+            
+            // Update in Supabase
+            _Concurrency.Task {
+                let success = await taskRepository.updateTask(updatedTask)
+                if !success {
+                    await MainActor.run {
+                        self.errorMessage = "Failed to update task in cloud."
+                        self.showingError = true
+                    }
+                }
+            }
         }
     }
     
     // MARK: - Data Persistence
-    private func saveTasks() {
+    func loadTasks() {
+        isLoading = true
+        errorMessage = nil
+        
         _Concurrency.Task {
-            let success = await dataManager.saveTasks(tasks)
-            if !success {
-                handleError(DataError.saveFailed)
-            }
-        }
-    }
-    
-    private func loadTasks() {
-        _Concurrency.Task {
-            isLoading = true
-            tasks = await dataManager.loadTasks()
-            isLoading = false
-        }
-    }
-    
-    // MARK: - Network Operations
-    func refreshFromNetwork() {
-        _Concurrency.Task {
-            isLoading = true
             do {
-                let remoteTasks = try await networkService.fetchRemoteData()
-                // Merge with existing tasks (avoid duplicates)
-                for remoteTask in remoteTasks {
-                    if !tasks.contains(where: { $0.title == remoteTask.title }) {
-                        tasks.append(remoteTask)
-                    }
+                let loadedTasks = await taskRepository.fetchTasks()
+                await MainActor.run {
+                    self.tasks = loadedTasks
+                    self.isLoading = false
                 }
-                let success = await dataManager.saveTasks(tasks)
-                if !success {
-                    handleError(DataError.saveFailed)
-                }
-            } catch {
-                handleError(error)
             }
-            isLoading = false
+        }
+    }
+    
+    func syncWithRemote() {
+        isLoading = true
+        errorMessage = nil
+        
+        _Concurrency.Task {
+            let success = await dataManager.syncTasksWithRemote()
+            
+            await MainActor.run {
+                if success {
+                    self.loadTasks()
+                } else {
+                    self.errorMessage = "Failed to sync with cloud."
+                    self.showingError = true
+                    self.isLoading = false
+                }
+            }
         }
     }
     

@@ -17,86 +17,12 @@ struct TaskListView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                VStack {
-                    // Stats Header
-                    TaskStatsView(viewModel: taskViewModel)
-                    
-                    // Task List
-                    if taskViewModel.isLoading {
-                        Spacer()
-                        ProgressView("Loading tasks...")
-                            .foregroundColor(themeManager.isDarkMode ? .white : .black)
-                        Spacer()
-                    } else if taskViewModel.tasks.isEmpty {
-                        EmptyStateView(
-                            title: "No Tasks Yet",
-                            message: "Try the AI Assistant to create your first task naturally!",
-                            systemImage: "brain.head.profile"
-                        )
-                    } else {
-                        List {
-                            ForEach(taskViewModel.tasks) { task in
-                                TaskRowView(task: task) {
-                                    taskViewModel.toggleTaskCompletion(task)
-                                }
-                                .onTapGesture {
-                                    showingTaskDetail = task
-                                }
-                                .listRowBackground(
-                                    themeManager.isDarkMode ? 
-                                    Color(.systemGray6) : Color(.systemBackground)
-                                )
-                            }
-                            .onDelete(perform: taskViewModel.deleteTask)
-                        }
-                        .refreshable {
-                            taskViewModel.refreshFromNetwork()
-                        }
-                        .background(themeManager.isDarkMode ? Color.black : Color.white)
-                    }
-                }
-                .background(themeManager.isDarkMode ? Color.black : Color(.systemGroupedBackground))
-                
-                // Floating AI Assistant Button
-                VStack {
-                    Spacer()
-                    HStack {
-                        Spacer()
-                        AIFloatingActionButton {
-                            showingAIAssistant = true
-                        }
-                        .padding(.trailing, 20)
-                        .padding(.bottom, 20)
-                    }
-                }
+                mainContentView
+                floatingButtonView
             }
             .navigationTitle("Tasks")
             .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button {
-                        showingAIAssistant = true
-                    } label: {
-                        HStack(spacing: 4) {
-                            Image(systemName: "brain.head.profile")
-                            Text("AI Assistant")
-                        }
-                    }
-                    .foregroundColor(themeManager.isDarkMode ? .white : .purple)
-                }
-                
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    HStack(spacing: 16) {
-                        Button("Refresh") {
-                            taskViewModel.refreshFromNetwork()
-                        }
-                        .foregroundColor(themeManager.isDarkMode ? .white : .blue)
-                        
-                        Button("Add Task") {
-                            showingAddTask = true
-                        }
-                        .foregroundColor(themeManager.isDarkMode ? .white : .green)
-                    }
-                }
+                toolbarItems
             }
         }
         .sheet(isPresented: $showingAddTask) {
@@ -112,6 +38,103 @@ struct TaskListView: View {
             Button("OK") { }
         } message: {
             Text(taskViewModel.errorMessage ?? "Unknown error occurred")
+        }
+    }
+    
+    @ViewBuilder
+    private var mainContentView: some View {
+        VStack {
+            // Stats Header
+            TaskStatsView(viewModel: taskViewModel)
+            
+            // Task List
+            taskListView
+        }
+        .background(themeManager.isDarkMode ? Color.black : Color(.systemGroupedBackground))
+    }
+    
+    @ViewBuilder
+    private var taskListView: some View {
+        if taskViewModel.isLoading {
+            Spacer()
+            ProgressView("Loading tasks...")
+                .foregroundColor(themeManager.isDarkMode ? .white : .black)
+            Spacer()
+        } else if taskViewModel.tasks.isEmpty {
+            EmptyStateView(
+                title: "No Tasks Yet",
+                message: "Try the AI Assistant to create your first task naturally!",
+                systemImage: "brain.head.profile"
+            )
+        } else {
+            taskList
+        }
+    }
+    
+    @ViewBuilder
+    private var taskList: some View {
+        List {
+            ForEach(taskViewModel.tasks) { task in
+                TaskRowView(task: task) {
+                    taskViewModel.toggleTaskCompletion(task)
+                }
+                .onTapGesture {
+                    showingTaskDetail = task
+                }
+                .listRowBackground(
+                    themeManager.isDarkMode ? 
+                    Color(.systemGray6) : Color(.systemBackground)
+                )
+            }
+            .onDelete(perform: taskViewModel.deleteTask)
+        }
+        .refreshable {
+            taskViewModel.syncWithRemote()
+        }
+        .background(themeManager.isDarkMode ? Color.black : Color.white)
+    }
+    
+    @ViewBuilder
+    private var floatingButtonView: some View {
+        VStack {
+            Spacer()
+            HStack {
+                Spacer()
+                AIFloatingActionButton {
+                    showingAIAssistant = true
+                }
+                .padding(.trailing, 20)
+                .padding(.bottom, 20)
+            }
+        }
+    }
+    
+    @ToolbarContentBuilder
+    private var toolbarItems: some ToolbarContent {
+        ToolbarItem(placement: .navigationBarLeading) {
+            Button {
+                showingAIAssistant = true
+            } label: {
+                HStack(spacing: 4) {
+                    Image(systemName: "brain.head.profile")
+                    Text("AI Assistant")
+                }
+            }
+            .foregroundColor(themeManager.isDarkMode ? .white : .purple)
+        }
+        
+        ToolbarItem(placement: .navigationBarTrailing) {
+            HStack(spacing: 16) {
+                Button("Refresh") {
+                    taskViewModel.syncWithRemote()
+                }
+                .foregroundColor(themeManager.isDarkMode ? .white : .blue)
+                
+                Button("Add Task") {
+                    showingAddTask = true
+                }
+                .foregroundColor(themeManager.isDarkMode ? .white : .green)
+            }
         }
     }
 }
@@ -135,9 +158,9 @@ struct TaskStatsView: View {
             
             // Stats Cards
             HStack(spacing: 12) {
-                StatCard(title: "Total", count: viewModel.tasks.count, color: .blue)
-                StatCard(title: "Pending", count: viewModel.pendingTasks.count, color: .orange)
-                StatCard(title: "Done", count: viewModel.completedTasks.count, color: .green)
+                TaskStatCard(title: "Total", count: viewModel.tasks.count, color: .blue)
+                TaskStatCard(title: "Pending", count: viewModel.pendingTasks.count, color: .orange)
+                TaskStatCard(title: "Done", count: viewModel.completedTasks.count, color: .green)
                 
                 // AI-Enhanced stat
                 VStack {
@@ -177,8 +200,8 @@ struct TaskStatsView: View {
     }
 }
 
-// MARK: - Stat Card
-struct StatCard: View {
+// MARK: - Task Stat Card
+struct TaskStatCard: View {
     let title: String
     let count: Int
     let color: Color

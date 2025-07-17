@@ -12,37 +12,37 @@
 			containerPortal = FD848A4E2E260F3C00BCB5E0 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = FD848A552E260F3C00BCB5E0;
-			remoteInfo = ai-task-manager;
+			remoteInfo = "ai-task-manager";
 		};
 		FD848A6F2E260F3D00BCB5E0 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = FD848A4E2E260F3C00BCB5E0 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = FD848A552E260F3C00BCB5E0;
-			remoteInfo = ai-task-manager;
+			remoteInfo = "ai-task-manager";
 		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		FD848A562E260F3C00BCB5E0 /* ai-task-manager.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ai-task-manager.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		FD848A642E260F3D00BCB5E0 /* ai-task-managerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ai-task-managerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		FD848A6E2E260F3D00BCB5E0 /* ai-task-managerUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ai-task-managerUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		FD848A562E260F3C00BCB5E0 /* ai-task-manager.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "ai-task-manager.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		FD848A642E260F3D00BCB5E0 /* ai-task-managerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "ai-task-managerTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		FD848A6E2E260F3D00BCB5E0 /* ai-task-managerUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "ai-task-managerUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		FD848A582E260F3C00BCB5E0 /* ai-task-manager */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = ai-task-manager;
+			path = "ai-task-manager";
 			sourceTree = "<group>";
 		};
 		FD848A672E260F3D00BCB5E0 /* ai-task-managerTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = ai-task-managerTests;
+			path = "ai-task-managerTests";
 			sourceTree = "<group>";
 		};
 		FD848A712E260F3D00BCB5E0 /* ai-task-managerUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = ai-task-managerUITests;
+			path = "ai-task-managerUITests";
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -110,10 +110,10 @@
 			fileSystemSynchronizedGroups = (
 				FD848A582E260F3C00BCB5E0 /* ai-task-manager */,
 			);
-			name = ai-task-manager;
+			name = "ai-task-manager";
 			packageProductDependencies = (
 			);
-			productName = ai-task-manager;
+			productName = "ai-task-manager";
 			productReference = FD848A562E260F3C00BCB5E0 /* ai-task-manager.app */;
 			productType = "com.apple.product-type.application";
 		};
@@ -133,10 +133,10 @@
 			fileSystemSynchronizedGroups = (
 				FD848A672E260F3D00BCB5E0 /* ai-task-managerTests */,
 			);
-			name = ai-task-managerTests;
+			name = "ai-task-managerTests";
 			packageProductDependencies = (
 			);
-			productName = ai-task-managerTests;
+			productName = "ai-task-managerTests";
 			productReference = FD848A642E260F3D00BCB5E0 /* ai-task-managerTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
@@ -156,10 +156,10 @@
 			fileSystemSynchronizedGroups = (
 				FD848A712E260F3D00BCB5E0 /* ai-task-managerUITests */,
 			);
-			name = ai-task-managerUITests;
+			name = "ai-task-managerUITests";
 			packageProductDependencies = (
 			);
-			productName = ai-task-managerUITests;
+			productName = "ai-task-managerUITests";
 			productReference = FD848A6E2E260F3D00BCB5E0 /* ai-task-managerUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
@@ -186,7 +186,7 @@
 					};
 				};
 			};
-			buildConfigurationList = FD848A512E260F3C00BCB5E0 /* Build configuration list for PBXProject "app_test" */;
+			buildConfigurationList = FD848A512E260F3C00BCB5E0 /* Build configuration list for PBXProject "ai-task-manager" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -390,7 +390,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = app_test/ai-task-manager.entitlements;
+				CODE_SIGN_ENTITLEMENTS = "ai-task-manager/ai-task-manager.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = DUFKVXQPKT;
@@ -410,7 +410,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "polover.app-test";
+				PRODUCT_BUNDLE_IDENTIFIER = "polover.ai-task-manager";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				SDKROOT = iphoneos;
@@ -426,7 +426,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = app_test/ai-task-manager.entitlements;
+				CODE_SIGN_ENTITLEMENTS = "ai-task-manager/ai-task-manager.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = DUFKVXQPKT;
@@ -446,7 +446,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "polover.app-test";
+				PRODUCT_BUNDLE_IDENTIFIER = "polover.ai-task-manager";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				SDKROOT = iphoneos;
@@ -468,14 +468,14 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
 				MACOSX_DEPLOYMENT_TARGET = 15.5;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "polover.app-testTests";
+				PRODUCT_BUNDLE_IDENTIFIER = "polover.ai-task-managerTests";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = auto;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2,7";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ai-task-manager.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/app_test";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ai-task-manager.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/ai-task-manager";
 				XROS_DEPLOYMENT_TARGET = 2.5;
 			};
 			name = Debug;
@@ -491,14 +491,14 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
 				MACOSX_DEPLOYMENT_TARGET = 15.5;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "polover.app-testTests";
+				PRODUCT_BUNDLE_IDENTIFIER = "polover.ai-task-managerTests";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = auto;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2,7";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ai-task-manager.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/app_test";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ai-task-manager.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/ai-task-manager";
 				XROS_DEPLOYMENT_TARGET = 2.5;
 			};
 			name = Release;
@@ -513,14 +513,14 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
 				MACOSX_DEPLOYMENT_TARGET = 15.5;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "polover.app-testUITests";
+				PRODUCT_BUNDLE_IDENTIFIER = "polover.ai-task-managerUITests";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = auto;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2,7";
-				TEST_TARGET_NAME = app_test;
+				TEST_TARGET_NAME = "ai-task-manager";
 				XROS_DEPLOYMENT_TARGET = 2.5;
 			};
 			name = Debug;
@@ -535,14 +535,14 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
 				MACOSX_DEPLOYMENT_TARGET = 15.5;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "polover.app-testUITests";
+				PRODUCT_BUNDLE_IDENTIFIER = "polover.ai-task-managerUITests";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = auto;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2,7";
-				TEST_TARGET_NAME = app_test;
+				TEST_TARGET_NAME = "ai-task-manager";
 				XROS_DEPLOYMENT_TARGET = 2.5;
 			};
 			name = Release;
@@ -550,7 +550,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		FD848A512E260F3C00BCB5E0 /* Build configuration list for PBXProject "app_test" */ = {
+		FD848A512E260F3C00BCB5E0 /* Build configuration list for PBXProject "ai-task-manager" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				FD848A762E260F3D00BCB5E0 /* Debug */,
