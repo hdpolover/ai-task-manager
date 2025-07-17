@@ -79,13 +79,13 @@ AI analyzes your input and suggests optimal task settings.
 ### **Setup**
 1. Clone the repository
 ```bash
-git clone https://github.com/yourusername/ai-task-manager.git
+git clone https://github.com/hdpolover/ai-task-manager.git
 cd ai-task-manager
 ```
 
 2. Open in Xcode
 ```bash
-open app_test.xcodeproj
+open ai-task-manager.xcodeproj
 ```
 
 3. Build and run
@@ -95,7 +95,7 @@ open app_test.xcodeproj
 ## 🔧 **Project Structure**
 
 ```
-app_test/
+ai-task-manager/
 ├── App/                          # App entry point and coordination
 ├── Core/                         # Shared utilities and services
 │   ├── Data/                     # Data management and persistence
@@ -387,13 +387,13 @@ class LocalDataManager: DataManagerProtocol {
 
 ```bash
 # Clone and navigate to project
-cd "/Users/mit06/Desktop/Mobile Dev/app_test"
+cd "/Users/mit06/Desktop/Mobile Dev/ai-task-manager"
 
 # Build for iOS Simulator
-xcodebuild -scheme app_test -destination 'platform=iOS Simulator,name=iPhone 16,OS=18.5' build
+xcodebuild -scheme ai-task-manager -destination 'platform=iOS Simulator,name=iPhone 16,OS=18.5' build
 
 # Run in Xcode for best experience
-open app_test.xcodeproj
+open ai-task-manager.xcodeproj
 ```
 
 ## 🤝 Next Steps

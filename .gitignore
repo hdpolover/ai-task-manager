@@ -103,3 +103,6 @@ iOSInjectionProject/
 
 # Log files
 *.log
+
+# AI Copilot Instructions (keep in repo for coding agents)
+.github/copilot-instructions.md
